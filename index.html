@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mappa dei Rilievi d'Italia</title>
+  <meta charset="utf-8" />
+  <!-- Inclusione del CSS di Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+  />
+  <!-- Inclusione del JavaScript di Leaflet -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+  ></script>
+  <style>
+    #map {
+      height: 600px; /* Altezza della mappa */
+      width: 100%; /* Larghezza della mappa */
+    }
+
+    /* Stile per la legenda */
+    .legenda {
+      background-color: white;
+      padding: 10px;
+      line-height: 18px;
+      color: #555;
+    }
+    .legenda i {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mappa dei Rilievi d'Italia</h1>
+  <div id="map"></div>
+
+  <!-- Script JavaScript -->
+  <script>
+    // Inizializzazione della mappa centrata sull'Italia
+    var map = L.map('map').setView([41.8719, 12.5674], 6);
+
+    // Aggiunta del layer base (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: 'Dati mappa © OpenStreetMap contributors',
+    }).addTo(map);
+
+    // Funzione per assegnare colori ai tipi di rilievo
+    function getColor(tipo) {
+      return tipo === 'montagna' ? '#8B0000' :
+             tipo === 'collina'  ? '#FFA500' :
+             tipo === 'pianura'  ? '#32CD32' :
+                                   '#FFFFFF';
+    }
+
+    // Stile per i layer GeoJSON
+    function style(feature) {
+      return {
+        fillColor: getColor(feature.properties.tipo),
+        weight: 1,
+        opacity: 1,
+        color: 'gray',
+        fillOpacity: 0.7
+      };
+    }
+
+    // Caricamento e aggiunta dei layer GeoJSON
+    ['montagne.geojson', 'colline.geojson', 'pianure.geojson'].forEach(function(url) {
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          L.geoJSON(data, {style: style}).addTo(map);
+        })
+        .catch(function(error) {
+          console.log('Errore nel caricamento di ' + url + ': ' + error);
+        });
+    });
+
+    // Aggiunta della legenda
+    var legenda = L.control({position: 'bottomright'});
+
+    legenda.onAdd = function (map) {
+      var div = L.DomUtil.create('div', 'legenda'),
+          tipi = ['montagna', 'collina', 'pianura'];
+
+      for (var i = 0; i < tipi.length; i++) {
+        div.innerHTML +=
+          '<i style="background:' + getColor(tipi[i]) + '"></i> ' +
+          tipi[i].charAt(0).toUpperCase() + tipi[i].slice(1) + '<br>';
+      }
+
+      return div;
+    };
+
+    legenda.addTo(map);
+  </script>
+</body>
+</html>
