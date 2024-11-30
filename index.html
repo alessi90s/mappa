@@ -1,72 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <title>Mappa 3D dei Rilievi d'Italia</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Inclusione del CSS di Mapbox GL JS -->
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <meta charset="utf-8">
+  <title>Mappa 3D dei Rilievi d'Italia con CesiumJS</title>
+  <!-- Inclusione del CSS di Cesium -->
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <!-- Inclusione del JavaScript di Cesium -->
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
   <style>
-    body { margin: 0; padding: 0; }
-    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    html, body, #cesiumContainer {
+      width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+    }
   </style>
 </head>
 <body>
-
-<div id="map"></div>
-
-<!-- Inclusione del JavaScript di Mapbox GL JS -->
-<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-<script>
-  // Inserisci il tuo token di accesso Mapbox qui
-  mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
-
-  // Inizializzazione della mappa
-  const map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/streets-v12', // Puoi scegliere altri stili
-    center: [12.5674, 41.8719], // Coordinate centrali dell'Italia (longitudine, latitudine)
-    zoom: 5
-  });
-
-  // Aggiungi controlli di navigazione
-  map.addControl(new mapboxgl.NavigationControl());
-
-  // Carica il layer del terreno
-  map.on('load', function () {
-    // Abilita il terreno 3D
-    map.addSource('mapbox-dem', {
-      'type': 'raster-dem',
-      'url': 'mapbox://mapbox.terrain-rgb',
-      'tileSize': 512,
-      'maxzoom': 14
-    });
-    map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
-
-    // Aggiungi ombreggiatura collinare per migliorare la percezione del rilievo
-    map.addLayer({
-      'id': 'hillshading',
-      'source': 'mapbox-dem',
-      'type': 'hillshade'
+  <div id="cesiumContainer"></div>
+  <script>
+    // Inizializzazione del visualizzatore Cesium
+    var viewer = new Cesium.Viewer('cesiumContainer', {
+      terrainProvider: Cesium.createWorldTerrain(),
+      animation: false,
+      timeline: false,
+      baseLayerPicker: false
     });
 
-    // Opzionale: aggiungi edifici 3D per le città
-    map.addLayer({
-      'id': '3d-buildings',
-      'source': 'composite',
-      'source-layer': 'building',
-      'filter': ['==', 'extrude', 'true'],
-      'type': 'fill-extrusion',
-      'minzoom': 15,
-      'paint': {
-        'fill-extrusion-color': '#aaa',
-        'fill-extrusion-height': ['get', 'height'],
-        'fill-extrusion-base': ['get', 'min_height'],
-        'fill-extrusion-opacity': 0.6
-      }
+    // Centra la vista sull'Italia
+    viewer.camera.setView({
+      destination : Cesium.Rectangle.fromDegrees(6.0, 36.0, 19.0, 47.0)
     });
-  });
-</script>
 
+    // Abilita l'effetto ombra per migliorare la percezione del rilievo
+    viewer.scene.globe.enableLighting = true;
+
+    // Opzionale: aggiungi un layer di immagini per migliorare la mappa
+    var imageryLayers = viewer.imageryLayers;
+    imageryLayers.addImageryProvider(new Cesium.IonImageryProvider({ assetId: 2 })); // Bing Maps Aerial
+
+    // Disabilita il logo di Cesium Ion se preferisci
+    viewer._cesiumWidget._creditContainer.style.display = "none";
+  </script>
 </body>
 </html>
