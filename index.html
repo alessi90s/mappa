@@ -2,42 +2,84 @@
 <html lang="it">
 <head>
   <meta charset="utf-8">
-  <title>Mappa 3D dei Rilievi d'Italia con CesiumJS</title>
-  <!-- Inclusione del CSS di Cesium -->
-  <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-  <!-- Inclusione del JavaScript di Cesium -->
-  <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
+  <title>Mappa 3D dei Rilievi d'Italia con MapLibre GL JS</title>
+  <!-- Inclusione del CSS di MapLibre GL JS -->
+  <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
   <style>
-    html, body, #cesiumContainer {
-      width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
-    }
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
   </style>
 </head>
 <body>
-  <div id="cesiumContainer"></div>
+  <div id="map"></div>
+  <!-- Inclusione del JavaScript di MapLibre GL JS -->
+  <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
   <script>
-    // Inizializzazione del visualizzatore Cesium
-    var viewer = new Cesium.Viewer('cesiumContainer', {
-      terrainProvider: Cesium.createWorldTerrain(),
-      animation: false,
-      timeline: false,
-      baseLayerPicker: false
+    // Inizializzazione della mappa
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: {
+        "version": 8,
+        "sources": {
+          "osm": {
+            "type": "raster",
+            "tiles": [
+              "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+              "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+              "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            ],
+            "tileSize": 256,
+            "attribution": "© OpenStreetMap contributors"
+          },
+          "terrain": {
+            "type": "raster-dem",
+            "tiles": [
+              "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
+            ],
+            "tileSize": 256,
+            "encoding": "terrarium",
+            "maxzoom": 15
+          }
+        },
+        "layers": [
+          {
+            "id": "background",
+            "type": "background",
+            "paint": { "background-color": "#ffffff" }
+          },
+          {
+            "id": "osm",
+            "type": "raster",
+            "source": "osm",
+            "minzoom": 0,
+            "maxzoom": 19
+          }
+        ]
+      },
+      center: [12.5674, 41.8719], // Centro dell'Italia
+      zoom: 5,
+      pitch: 60, // Inclinazione per effetto 3D
+      bearing: 0
     });
 
-    // Centra la vista sull'Italia
-    viewer.camera.setView({
-      destination : Cesium.Rectangle.fromDegrees(6.0, 36.0, 19.0, 47.0)
+    // Aggiungi controlli di navigazione
+    map.addControl(new maplibregl.NavigationControl());
+
+    // Aggiungi il terreno alla mappa
+    map.on('load', () => {
+      map.setTerrain({ "source": "terrain", "exaggeration": 1.5 });
+
+      // Aggiungi uno strato cielo per migliorare l'effetto visivo
+      map.addLayer({
+        'id': 'sky',
+        'type': 'sky',
+        'paint': {
+          'sky-type': 'atmosphere',
+          'sky-atmosphere-sun': [0.0, 0.0],
+          'sky-atmosphere-sun-intensity': 15
+        }
+      });
     });
-
-    // Abilita l'effetto ombra per migliorare la percezione del rilievo
-    viewer.scene.globe.enableLighting = true;
-
-    // Opzionale: aggiungi un layer di immagini per migliorare la mappa
-    var imageryLayers = viewer.imageryLayers;
-    imageryLayers.addImageryProvider(new Cesium.IonImageryProvider({ assetId: 2 })); // Bing Maps Aerial
-
-    // Disabilita il logo di Cesium Ion se preferisci
-    viewer._cesiumWidget._creditContainer.style.display = "none";
   </script>
 </body>
 </html>
